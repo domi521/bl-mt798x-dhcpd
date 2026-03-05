@@ -23,6 +23,14 @@ on:
         required: true
         default: 'master'
         type: string
+      ATF_VERSION: 
+        description: 'ATF versions'
+        required: true
+        default: '2025'
+        type: choice
+        options:
+          - '2025'
+          - '2024'
       ATF_OC:
         description: 'Include mt7981/mt7986 OC profiles'
         required: false
@@ -106,10 +114,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          version="${{ github.event.inputs.ATF_VERSION }}"
           cd bl-mt798x-dhcpd
           chmod +x ./build.sh
           chmod +x ./compile_atf.sh
-          ./compile_atf.sh
+          VERSION=${version} ./compile_atf.sh
           echo "FILE_DATE=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_ENV
           echo "status=success" >> $GITHUB_OUTPUT
 
@@ -159,6 +168,7 @@ jobs:
           echo "- 提交来源: ${{ github.sha }}" >> release.txt
           echo "- 使用源码: ${{ env.REPO_URL }}" >> release.txt
           echo "- 使用分支: ${{ env.REPO_BRANCH }}" >> release.txt
+          echo "- 使用ATF版本: ${{ github.event.inputs.ATF_VERSION }}" >> release.txt
           if [ "${{ github.event.inputs.ATF_OC }}" = "true" ]; then
             echo "- 已启用: 编译超频配置" >> release.txt
           else

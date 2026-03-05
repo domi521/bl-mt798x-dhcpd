@@ -69,9 +69,16 @@ for cfg_file in $CONFIG_LIST; do
     mkdir -p "$ATF_DIR/build"
     cp -f "$cfg_file" "$ATF_DIR/build/.config"
     echo "Starting build for $cfg_name ..."
+    echo "Using ATF_DIR: $ATF_DIR"
+    echo "Version: $VERSION"
+    echo "Using toolchain: ${TOOLCHAIN}gcc"
     echo "----------------------------------------"
     build_ok=1
-    make -C "$ATF_DIR" olddefconfig || build_ok=0
+    if [ "$VERSION" = "2025" ] || [ "$VERSION" = "2026" ]; then
+        make -C "$ATF_DIR" olddefconfig || build_ok=0
+    else
+        make -C "$ATF_DIR" defconfig || build_ok=0
+    fi
     make -C "$ATF_DIR" -f "$ATF_MKFILE" clean CONFIG_CROSS_COMPILER="$TOOLCHAIN" CROSS_COMPILER="$TOOLCHAIN" || build_ok=0
     if [ "$build_ok" = "1" ]; then
         make -C "$ATF_DIR" -f "$ATF_MKFILE" all CONFIG_CROSS_COMPILER="$TOOLCHAIN" CROSS_COMPILER="$TOOLCHAIN" -j $(nproc) || build_ok=0
@@ -80,7 +87,7 @@ for cfg_file in $CONFIG_LIST; do
     if [ "$build_ok" = "1" ] && [ -f "$ATF_DIR/build/${soc}/release/bl2.img" ]; then
         src_file="$ATF_DIR/build/${soc}/release/bl2.img"
         bl2_md5=$(md5sum "$src_file" | awk '{print $1}')
-        out_name="bl2-${cfg_base}-Yuzhii_md5-${bl2_md5}.img"
+        out_name="bl2-${cfg_base}-${VERSION}-Yuzhii_md5-${bl2_md5}.img"
         cp -f "$src_file" "$OUTPUT_DIR/$out_name"
         echo "$out_name build done"
         echo "----------------------------------------"
@@ -88,7 +95,7 @@ for cfg_file in $CONFIG_LIST; do
     elif [ "$build_ok" = "1" ] && [ -f "$ATF_DIR/build/${soc}/release/bl2.bin" ]; then
         src_file="$ATF_DIR/build/${soc}/release/bl2.bin"
         bl2_md5=$(md5sum "$src_file" | awk '{print $1}')
-        out_name="bl2-${cfg_base}-Yuzhii_md5-${bl2_md5}.bin"
+        out_name="bl2-${cfg_base}-${VERSION}-Yuzhii_md5-${bl2_md5}.bin"
         cp -f "$src_file" "$OUTPUT_DIR/$out_name"
         echo "Warning: bl2.img not found, fallback to bl2.bin"
         echo "$out_name build done"
